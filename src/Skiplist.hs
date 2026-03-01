@@ -28,7 +28,7 @@ attrPath = skiplister attrPathList
 
 packageName :: TextSkiplister m
 packageName name =
-  if name == "elementary-xfce-icon-theme" -- https://github.com/nix-community/nixpkgs-update/issues/63
+  if name == "elementary-xfce-icon-theme" -- https://github.com/NixOS/nixpkgs-update/issues/63
     then return ()
     else skiplister nameList name
 
@@ -153,7 +153,7 @@ nameList =
       "checkbashism"
       "needs to be fixed, see https://github.com/NixOS/nixpkgs/pull/39552",
     eq "isl" "multi-version long building package",
-    infixOf "qscintilla" "https://github.com/nix-community/nixpkgs-update/issues/51",
+    infixOf "qscintilla" "https://github.com/NixOS/nixpkgs-update/issues/51",
     eq "itstool" "https://github.com/NixOS/nixpkgs/pull/41339",
     infixOf
       "virtualbox"

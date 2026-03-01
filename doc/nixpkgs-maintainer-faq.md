@@ -12,7 +12,7 @@ Thanks for being a maintainer. Hopefully, @r-ryantm will be able to save you som
 
 ## Why is @r-ryantm not updating my package? {#no-update}
 
-There are lots of reasons a package might not be updated. You can usually figure out which one is the issue by looking at the [logs](https://nixpkgs-update-logs.nix-community.org/) or by asking the [maintainers](#contact).
+There are lots of reasons a package might not be updated. You can usually figure out which one is the issue by looking at the [logs](https://nixpkgs-update-logs.nixos.org/) or by asking the [maintainers](#contact).
 
 ### No new version information
 
@@ -34,7 +34,7 @@ Updates can be disabled by adding a comment to the package:
 
 ### Skiplist
 
-We maintain a [Skiplist](https://github.com/nix-community/nixpkgs-update/blob/main/src/Skiplist.hs) of different things not to update. It is possible your package is triggering one of the skip criteria.
+We maintain a [Skiplist](https://github.com/NixOS/nixpkgs-update/blob/main/src/Skiplist.hs) of different things not to update. It is possible your package is triggering one of the skip criteria.
 
 Python updates are skipped if they cause more than 100 rebuilds.
 

@@ -4,7 +4,7 @@ Run without installing on stable Nix:
 
 ```ShellSession
 $ nix run \
-  -f https://github.com/nix-community/nixpkgs-update/archive/main.tar.gz \
+  -f https://github.com/NixOS/nixpkgs-update/archive/main.tar.gz \
   -c nixpkgs-update --help
 ```
 
@@ -12,7 +12,7 @@ Run without installing on unstable Nix with nix command enabled:
 
 ```ShellSession
 $ nix shell \
-  -f https://github.com/nix-community/nixpkgs-update/archive/main.tar.gz \
+  -f https://github.com/NixOS/nixpkgs-update/archive/main.tar.gz \
   -c nixpkgs-update --help
 ```
 
@@ -20,20 +20,20 @@ Run without installing on unstable Nix with nix flakes enabled:
 
 ```ShellSession
 $ nix run \
-  github:nix-community/nixpkgs-update -- --help
+  github:NixOS/nixpkgs-update -- --help
 ```
 
 Install into your Nix profile:
 
 ```ShellSession
 $ nix-env \
-  -if https://github.com/nix-community/nixpkgs-update/archive/main.tar.gz
+  -if https://github.com/NixOS/nixpkgs-update/archive/main.tar.gz
 ```
 
 Declaratively with [niv](https://github.com/nmattia/niv):
 
 ```ShellSession
-$ niv add nix-community/nixpkgs-update
+$ niv add NixOS/nixpkgs-update
 ```
 
 NixOS config with Niv:

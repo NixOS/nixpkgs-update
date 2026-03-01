@@ -34,7 +34,7 @@ update, and CVEs present in both version.
 
 If you would like to report a problem with the security report, please
 use the [nixpkgs-update GitHub
-issues](https://github.com/nix-community/nixpkgs-update/issues).
+issues](https://github.com/NixOS/nixpkgs-update/issues).
 
 The initial development of the security report was made possible by a
 partnership with [Serokell](https://serokell.io/) and the [NLNet
@@ -61,7 +61,7 @@ is made against staging.
 
 ## Logs
 
-[Logs from r-ryantm's runs](https://nixpkgs-update-logs.nix-community.org/) are
+[Logs from r-ryantm's runs](https://nixpkgs-update-logs.nixos.org/) are
 available online. There are a lot of packages `nixpkgs-update`
 currently has no hope of updating. Please dredge the logs to find out
 why your pet package is not receiving updates.
@@ -70,5 +70,5 @@ why your pet package is not receiving updates.
 ## Cache
 
 By serving the build outputs from
-[https://nixpkgs-update-cache.nix-community.org/](https://nixpkgs-update-cache.nix-community.org/), nixpkgs-update allows you to
+[https://nixpkgs-update-cache.nixos.org/](https://nixpkgs-update-cache.nixos.org/), nixpkgs-update allows you to
 test a package with one command.
