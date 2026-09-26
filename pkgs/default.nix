@@ -29,6 +29,7 @@ let
       polysemy-plugin = pkgs.haskell.lib.dontCheck haskellPackages.polysemy-plugin;
       polysemy = pkgs.haskell.lib.dontCheck haskellPackages.polysemy;
       http-api-data = pkgs.haskell.lib.doJailbreak haskellPackages.http-api-data;
+      partial-order = pkgs.haskell.lib.doJailbreak haskellPackages.partial-order;
       nixpkgs-update =
         pkgs.haskell.lib.justStaticExecutables (
           pkgs.haskell.lib.failOnAllWarnings (
