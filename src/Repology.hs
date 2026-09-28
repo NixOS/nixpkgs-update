@@ -173,7 +173,7 @@ fetch = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   liftIO $ hPutStrLn stderr "starting"
-  let addUserAgent req = pure $ req {requestHeaders = ("User-Agent", "https://github.com/nix-community/nixpkgs-update") : requestHeaders req}
+  let addUserAgent req = pure $ req {requestHeaders = ("User-Agent", "https://github.com/NixOS/nixpkgs-update") : requestHeaders req}
   manager' <- newManager tlsManagerSettings {managerModifyRequest = addUserAgent}
   e <- runClientM allNixUpdateInfo (mkClientEnv manager' baseUrl)
   case e of
