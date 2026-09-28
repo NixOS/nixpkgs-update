@@ -21,10 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            accept-flake-config = true
-            experimental-features = nix-command flakes
+      - uses: Mic92/hestia@v3
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
