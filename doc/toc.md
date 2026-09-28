@@ -7,6 +7,5 @@
 * [r-ryantm bot](#r-ryantm)
 * [Details](#details)
 * [Contributing](#contributing)
-* [Donate](#donate)
 * [Nixpkgs Maintainer FAQ](#nixpkgs-maintainer-faq)
 * [Contact](#contact)
