@@ -23,8 +23,9 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
-            accept-flake-config = true
             experimental-features = nix-command flakes
+      - name: Setup Nix cache
+        uses: Mic92/hestia@v3
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
