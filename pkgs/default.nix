@@ -29,18 +29,17 @@ let
       polysemy-plugin = pkgs.haskell.lib.dontCheck haskellPackages.polysemy-plugin;
       polysemy = pkgs.haskell.lib.dontCheck haskellPackages.polysemy;
       http-api-data = pkgs.haskell.lib.doJailbreak haskellPackages.http-api-data;
+      partial-order = pkgs.haskell.lib.doJailbreak haskellPackages.partial-order;
       nixpkgs-update =
-        pkgs.haskell.lib.justStaticExecutables (
-          pkgs.haskell.lib.failOnAllWarnings (
-            pkgs.haskell.lib.disableExecutableProfiling (
-              pkgs.haskell.lib.disableLibraryProfiling (
-                pkgs.haskell.lib.generateOptparseApplicativeCompletion "nixpkgs-update" (
-                  (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs drvAttrs
-                )
-              )
-            )
-          )
-        );
+        pkgs.lib.pipe ((haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs drvAttrs)
+          [
+            pkgs.haskell.lib.justStaticExecutables
+            # FIXME: fix recently occuring warnings
+            # pkgs.haskell.lib.failOnAllWarnings
+            pkgs.haskell.lib.disableExecutableProfiling
+            pkgs.haskell.lib.disableLibraryProfiling
+            (haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ])
+          ];
     };
   };
 

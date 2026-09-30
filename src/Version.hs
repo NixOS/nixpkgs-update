@@ -13,7 +13,7 @@ import Data.Foldable (toList)
 import Data.Function (on)
 import qualified Data.PartialOrd as PO
 import qualified Data.Text as T
-import Data.Versions (SemVer (..), VUnit (..), semver)
+import Data.Versions (Chunk (..), Release (..), SemVer (..), semver)
 import OurPrelude
 import Utils
 
@@ -148,11 +148,14 @@ instance SimpleVersion ParsedVersion where
 instance SimpleVersion SemVer where
   simpleVersion SemVer {_svMajor, _svMinor, _svPatch, _svPreRel} =
     [IntPart _svMajor, IntPart _svMinor, IntPart _svPatch]
-      ++ map toPart (concat (fmap toList _svPreRel))
+      ++ ( case _svPreRel of
+             Just (Release preRel) -> toList (fmap toPart preRel)
+             Nothing -> []
+         )
     where
-      toPart :: VUnit -> VersionPart
-      toPart (Digits i) = IntPart i
-      toPart (Str t) =
+      toPart :: Chunk -> VersionPart
+      toPart (Numeric i) = IntPart i
+      toPart (Alphanum t) =
         case textPart t of
           PreReleasePart p -> PreReleasePart p
           p -> PreReleasePart p
