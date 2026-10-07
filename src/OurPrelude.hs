@@ -15,6 +15,7 @@ module OurPrelude
     module System.Process.Typed,
     module Polysemy,
     module Polysemy.Error,
+    module Control.Monad,
     ignoreExitCodeException,
     Set,
     Text,
@@ -38,6 +39,7 @@ import Control.Applicative ((<|>))
 import Control.Category ((>>>))
 import Control.Error
 import qualified Control.Exception
+import Control.Monad (forM, forM_, unless, void, when)
 import Control.Monad.Except
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
@@ -53,7 +55,7 @@ import Data.Vector (Vector)
 import Language.Haskell.TH.Quote
 import qualified NeatInterpolation
 import Polysemy
-import Polysemy.Error hiding (note, try, tryJust)
+import Polysemy.Error hiding (mapError, note, try, tryJust)
 import qualified Process as P
 import System.Exit
 import System.FilePath ((</>))
