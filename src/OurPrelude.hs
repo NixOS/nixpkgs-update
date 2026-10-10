@@ -8,6 +8,7 @@ module OurPrelude
     (<&>),
     (&),
     module Control.Error,
+    module Control.Monad,
     module Control.Monad.Except,
     module Control.Monad.Trans.Class,
     module Control.Monad.IO.Class,
@@ -38,7 +39,8 @@ import Control.Applicative ((<|>))
 import Control.Category ((>>>))
 import Control.Error
 import qualified Control.Exception
-import Control.Monad.Except
+import Control.Monad
+import Control.Monad.Except hiding (mapError)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Data.Bifunctor
@@ -53,7 +55,7 @@ import Data.Vector (Vector)
 import Language.Haskell.TH.Quote
 import qualified NeatInterpolation
 import Polysemy
-import Polysemy.Error hiding (note, try, tryJust)
+import Polysemy.Error hiding (mapError, note, try, tryJust)
 import qualified Process as P
 import System.Exit
 import System.FilePath ((</>))

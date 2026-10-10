@@ -26,6 +26,7 @@ let
 
   haskellPackages = pkgs.haskellPackages.override {
     overrides = _: haskellPackages: {
+      partial-order = pkgs.haskell.lib.doJailbreak haskellPackages.partial-order;
       polysemy-plugin = pkgs.haskell.lib.dontCheck haskellPackages.polysemy-plugin;
       polysemy = pkgs.haskell.lib.dontCheck haskellPackages.polysemy;
       http-api-data = pkgs.haskell.lib.doJailbreak haskellPackages.http-api-data;
@@ -34,7 +35,7 @@ let
           pkgs.haskell.lib.failOnAllWarnings (
             pkgs.haskell.lib.disableExecutableProfiling (
               pkgs.haskell.lib.disableLibraryProfiling (
-                pkgs.haskell.lib.generateOptparseApplicativeCompletion "nixpkgs-update" (
+                pkgs.haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ] (
                   (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs drvAttrs
                 )
               )

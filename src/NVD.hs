@@ -26,7 +26,7 @@ import Control.Exception (SomeException, try)
 import Crypto.Hash.SHA256 (hashlazy)
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import Data.Hex (hex, unhex)
-import Data.List (group)
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Text as T
 import Data.Time.Calendar (toGregorian)
 import Data.Time.Clock
@@ -227,16 +227,12 @@ getCVEs conn productID version = do
       )
       (productID, productID, productID, productID, productID)
   let cveIDs =
-        map head $
-          group $
-            flip mapMaybe matches $
-              \(CPEMatchRow cve cpeMatch) ->
-                if matchVersion (cpeMatchVersionMatcher cpeMatch) version
-                  then
-                    if NVDRules.filter cve cpeMatch productID version
-                      then Just (cveID cve)
-                      else Nothing
-                  else Nothing
+        map NonEmpty.head . NonEmpty.group $
+          flip mapMaybe matches $ \(CPEMatchRow cve cpeMatch) ->
+            if matchVersion (cpeMatchVersionMatcher cpeMatch) version
+              && NVDRules.filter cve cpeMatch productID version
+              then Just (cveID cve)
+              else Nothing
   forM cveIDs $ getCVE conn
 
 putCVEs :: Connection -> [CVE] -> IO ()

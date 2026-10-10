@@ -123,7 +123,7 @@ lookupAttrPath updateEnv =
           <> nixCommonOptions
       )
       & ourReadProcess_
-      & fmapRT (fst >>> T.lines >>> head >>> T.words >>> head)
+      >>= (fst >>> T.words >>> tryHead "No output from nix-env")
   )
     <|>
     -- if that fails, check by attrpath

@@ -708,20 +708,24 @@ updatePackage ::
   Options ->
   Text ->
   IO ExitCode
-updatePackage o updateInfo = do
-  let (p, oldV, newV, url) = head (rights (parseUpdates updateInfo))
-  let updateInfoLine = (p <> " " <> oldV <> " -> " <> newV <> fromMaybe "" (fmap (" " <>) url))
-  let updateEnv = UpdateEnv p oldV newV url o
-  let log = T.putStrLn
-  liftIO $ notifyOptions log o
-  updated <- updatePackageBatch log updateInfoLine updateEnv
-  case updated of
-    UpdatePackageFailure -> do
-      log $ "[result] Failed to update " <> updateInfoLine
+updatePackage o updateInfo =
+  case rights (parseUpdates updateInfo) of
+    [] -> do
+      T.putStrLn "Failed to parse update info"
       return $ ExitFailure 1
-    UpdatePackageSuccess -> do
-      log $ "[result] Success updating " <> updateInfoLine
-      return ExitSuccess
+    (p, oldV, newV, url) : _ -> do
+      let updateInfoLine = p <> " " <> oldV <> " -> " <> newV <> maybe "" (" " <>) url
+          updateEnv = UpdateEnv p oldV newV url o
+          log = T.putStrLn
+      notifyOptions log o
+      updated <- updatePackageBatch log updateInfoLine updateEnv
+      case updated of
+        UpdatePackageFailure -> do
+          log $ "[result] Failed to update " <> updateInfoLine
+          return $ ExitFailure 1
+        UpdatePackageSuccess -> do
+          log $ "[result] Success updating " <> updateInfoLine
+          return ExitSuccess
 
 withWorktree :: Text -> Text -> UpdateEnv -> IO a -> IO a
 withWorktree branch attrpath updateEnv action = do

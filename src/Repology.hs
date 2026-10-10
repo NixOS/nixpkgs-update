@@ -4,7 +4,6 @@
 
 module Repology where
 
-import Control.Applicative (liftA2)
 import Control.Concurrent (threadDelay)
 import Data.Aeson
 import Data.HashMap.Strict

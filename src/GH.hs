@@ -18,7 +18,7 @@ module GH
   )
 where
 
-import Control.Applicative (liftA2, some)
+import Control.Applicative (some)
 import Data.Aeson (FromJSON)
 import Data.Bitraversable (bitraverse)
 import qualified Data.Text as T

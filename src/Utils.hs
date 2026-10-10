@@ -288,19 +288,13 @@ hubFileLocation = do
   return (xloc <|> hloc)
 
 hubConfigField :: Text -> IO (Maybe Text)
-hubConfigField field = do
-  hubFile <- hubFileLocation
-  case hubFile of
-    Nothing -> return Nothing
-    Just file -> do
-      exists <- fileExist file
-      if not exists
-        then return Nothing
-        else do
-          contents <- T.readFile file
-          let splits = T.splitOn field contents
-              token = T.takeWhile (/= '\n') $ head (drop 1 splits)
-          return $ Just token
+hubConfigField field = runMaybeT $ do
+  file <- MaybeT hubFileLocation
+  guard =<< liftIO (fileExist file)
+  contents <- liftIO (T.readFile file)
+  hoistMaybe $ case T.splitOn field contents of
+    (_ : rest : _) -> Just (T.takeWhile (/= '\n') rest)
+    _ -> Nothing
 
 getGithubToken :: IO (Maybe Text)
 getGithubToken = do
