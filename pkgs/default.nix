@@ -67,7 +67,10 @@ let
 
   doc = stdenvNoCC.mkDerivation {
     name = "nixpkgs-update-doc";
-    src = ../.;
+    src = lib.fileset.toSource {
+      root = ../.;
+      fileset = ../doc;
+    };
     phases = [ "mmdocPhase" ];
     mmdocPhase = "${lib.getExe mmdoc} nixpkgs-update $src/doc $out";
   };

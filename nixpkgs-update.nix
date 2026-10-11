@@ -11,7 +11,18 @@
 mkDerivation {
   pname = "nixpkgs-update";
   version = "0.4.0";
-  src = ./.;
+  src = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.unions [
+      ./nixpkgs-update.cabal
+      ./LICENSE
+      ./README.md
+      ./app
+      ./src
+      ./test
+      ./test_data
+    ];
+  };
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [

@@ -1,10 +1,10 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.2.
+-- This file has been generated from package.yaml by hpack version 0.38.3.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 216d241b554fc46ae5c7bcb1605ea89df7993f629b942a8f243338d52cb49301
+-- hash: 97f3f76c1ecc98d6d598250ec6cd70e4bd3cf456609b909bfec98412b2328de2
 
 name:           nixpkgs-update
 version:        0.4.0
@@ -19,8 +19,7 @@ copyright:      2018-2022 Ryan Mulligan et al.
 license:        CC0-1.0
 license-file:   LICENSE
 build-type:     Simple
-extra-source-files:
-    README.md
+extra-source-files: README.md test_data/*.md test_data/*.nix
 
 source-repository head
   type: git
