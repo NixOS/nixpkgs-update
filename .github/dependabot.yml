@@ -4,3 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "nix"
+    directory: "/"
+    schedule:
+      # Run a bit after each nixpkgs release (on the 1st of January and July)
+      interval: "semiannually"
