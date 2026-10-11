@@ -33,7 +33,19 @@ nix-shell --run 'ghcid -c "cabal v2-repl tests"'
 Updating the Cabal file when adding new dependencies or options:
 
 ```bash
-nix run nixpkgs#haskellPackages.hpack
+nix-shell --run hpack
+```
+
+Build the HTML documentation:
+
+```bash
+nix-build -A nixpkgs-update-doc
+```
+
+Run the code formatter:
+
+```bash
+nix-shell --run treefmt
 ```
 
 Source files are formatted with [Ormolu](https://github.com/tweag/ormolu).

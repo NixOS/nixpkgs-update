@@ -1,0 +1,4 @@
+[formatter.ormolu]
+command = "ormolu"
+includes = ["*.hs"]
+options = ["--mode", "inplace"]

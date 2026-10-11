@@ -1,17 +1,19 @@
-{ nixpkgs
-, mmdoc
-, runtimeDeps
-, system
-, self
-, ...
+{
+  lib,
+  cabal-install,
+  ghcid,
+  haskell,
+  haskellPackages,
+  mmdoc,
+  ormolu,
+  stdenvNoCC,
+  treefmt,
+
+  pkgs,
+  runtimePkgs ? pkgs,
 }:
 
 let
-
-  runtimePkgs = import runtimeDeps { inherit system; };
-
-  pkgs = import nixpkgs { inherit system; config = { allowBroken = true; }; };
-
   deps = with runtimePkgs; {
     NIX = nix;
     GIT = git;
@@ -22,56 +24,53 @@ let
     NIXPKGSREVIEW = nixpkgs-review;
   };
 
-  drvAttrs = attrs: deps;
-
-  haskellPackages = pkgs.haskellPackages.override {
+  haskellPackages' = haskellPackages.override {
     overrides = _: haskellPackages: {
-      partial-order = pkgs.haskell.lib.doJailbreak haskellPackages.partial-order;
-      polysemy-plugin = pkgs.haskell.lib.dontCheck haskellPackages.polysemy-plugin;
-      polysemy = pkgs.haskell.lib.dontCheck haskellPackages.polysemy;
-      http-api-data = pkgs.haskell.lib.doJailbreak haskellPackages.http-api-data;
-      nixpkgs-update =
-        pkgs.haskell.lib.justStaticExecutables (
-          pkgs.haskell.lib.failOnAllWarnings (
-            pkgs.haskell.lib.disableExecutableProfiling (
-              pkgs.haskell.lib.disableLibraryProfiling (
-                pkgs.haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ] (
-                  (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs drvAttrs
-                )
+      partial-order = haskell.lib.doJailbreak (haskell.lib.markUnbroken haskellPackages.partial-order);
+      polysemy-plugin = haskell.lib.dontCheck haskellPackages.polysemy-plugin;
+      polysemy = haskell.lib.dontCheck haskellPackages.polysemy;
+      http-api-data = haskell.lib.doJailbreak haskellPackages.http-api-data;
+      nixpkgs-update = haskell.lib.justStaticExecutables (
+        haskell.lib.failOnAllWarnings (
+          haskell.lib.disableExecutableProfiling (
+            haskell.lib.disableLibraryProfiling (
+              haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ] (
+                (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs (prevAttrs: {
+                  env = prevAttrs.env or { } // deps;
+                  passthru = prevAttrs.passthru or { } // {
+                    nixpkgs-update-doc = doc;
+                    devShell = shell;
+                  };
+                })
               )
             )
           )
-        );
+        )
+      );
     };
   };
 
-  shell = haskellPackages.shellFor {
-    nativeBuildInputs = with pkgs; [
+  shell = haskellPackages'.shellFor {
+    nativeBuildInputs = [
       cabal-install
       ghcid
-      haskellPackages.cabal2nix
+      haskellPackages'.cabal2nix
+      ormolu
+      treefmt
     ];
     packages = ps: [ ps.nixpkgs-update ];
     shellHook = ''
-      export ${
-        nixpkgs.lib.concatStringsSep " " (
-          nixpkgs.lib.mapAttrsToList (name: value: ''${name}="${value}"'') deps
-        )
-      }
+      ${lib.toShellVars deps}
+      export ${toString (builtins.attrNames deps)}
     '';
   };
 
-  doc = pkgs.stdenvNoCC.mkDerivation rec {
+  doc = stdenvNoCC.mkDerivation {
     name = "nixpkgs-update-doc";
-    src = self;
+    src = ../.;
     phases = [ "mmdocPhase" ];
-    mmdocPhase = "${mmdoc.packages.${system}.mmdoc}/bin/mmdoc nixpkgs-update $src/doc $out";
+    mmdocPhase = "${lib.getExe mmdoc} nixpkgs-update $src/doc $out";
   };
 
 in
-{
-  nixpkgs-update = haskellPackages.nixpkgs-update;
-  default = haskellPackages.nixpkgs-update;
-  nixpkgs-update-doc = doc;
-  devShell = shell;
-}
+haskellPackages'.nixpkgs-update
