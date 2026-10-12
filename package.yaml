@@ -13,6 +13,8 @@ copyright: 2018-2022 Ryan Mulligan et al.
 category: Web
 extra-source-files:
 - README.md
+- test_data/*.md
+- test_data/*.nix
 
 github: NixOS/nixpkgs-update
 

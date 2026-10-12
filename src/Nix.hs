@@ -37,7 +37,7 @@ import Language.Haskell.TH.Env (envQ)
 import OurPrelude
 import System.Exit ()
 import qualified System.Process.Typed as TP
-import Utils (UpdateEnv (..), nixBuildOptions, nixCommonOptions, srcOrMain)
+import Utils (UpdateEnv (..), nixBuildOptions, nixCommonOptions, srcOrMain, timeoutBin)
 import Prelude hiding (log)
 
 binPath :: String
@@ -269,7 +269,7 @@ runUpdateScript attrPath = do
   (exitCode, output) <-
     ourReadProcessInterleaved $
       TP.setStdin (TP.byteStringInput "\n") $
-        proc "timeout" [T.unpack timeout, "env", "NIXPKGS_ALLOW_UNFREE=1", "nix-shell", "maintainers/scripts/update.nix", "--argstr", "package", T.unpack attrPath]
+        proc timeoutBin [T.unpack timeout, "env", "NIXPKGS_ALLOW_UNFREE=1", "nix-shell", "maintainers/scripts/update.nix", "--argstr", "package", T.unpack attrPath]
   case exitCode of
     ExitFailure 124 -> do
       return (exitCode, "updateScript for " <> attrPath <> " took longer than " <> timeout <> " and timed out. Other output: " <> output)

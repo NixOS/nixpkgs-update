@@ -9,32 +9,67 @@
 
   inputs.runtimeDeps.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
-  outputs = { self, nixpkgs, mmdoc, treefmt-nix, runtimeDeps } @ args:
+  outputs = { self, nixpkgs, mmdoc, treefmt-nix, runtimeDeps }:
     let
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      eachSystem = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
-      treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs {
-        projectRootFile = ".git/config";
-        programs.ormolu.enable = true;
-      });
+      inherit (builtins) mapAttrs zipAttrsWith;
+      inherit (nixpkgs.lib)
+        genAttrs
+        mapAttrs'
+        mapAttrsToList
+        mergeAttrsList
+        mkForce
+        nameValuePair
+        ;
+
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
+      eachSystem = f: genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
+      treefmtEval = eachSystem (
+        system: pkgs:
+        (treefmt-nix.lib.evalModule pkgs {
+          build.wrapper = mkForce (
+            pkgs.writeShellApplication {
+              name = "treefmt";
+              runtimeInputs = packageEval.${system}.devShell.nativeBuildInputs;
+              inheritPath = false;
+              text = ''exec treefmt "$@"'';
+            }
+          );
+        }).config.build
+      );
+      packageEval = eachSystem (
+        system: pkgs:
+        import ./. {
+          inherit pkgs system;
+          mmdoc =
+            pkgs.lib.recursiveUpdate
+              (mmdoc.packages.${system}.mmdoc.overrideAttrs {
+                # Unit tests have been broken on aarch64-linux since 0.20
+                ${if system == "aarch64-linux" then "doCheck" else null} = false;
+              })
+              {
+                meta.mainProgram = "mmdoc";
+              };
+          runtimePkgs = runtimeDeps.legacyPackages.${system};
+        }
+      );
     in
     {
-      checks.x86_64-linux =
-        let
-          packages = nixpkgs.lib.mapAttrs' (n: nixpkgs.lib.nameValuePair "package-${n}") self.packages.x86_64-linux;
-          devShells = nixpkgs.lib.mapAttrs' (n: nixpkgs.lib.nameValuePair "devShell-${n}") self.devShells.x86_64-linux;
-        in
-        packages // devShells // {
-          treefmt = treefmtEval.x86_64-linux.config.build.check self;
-        };
+      checks = zipAttrsWith (_: mergeAttrsList) (
+        mapAttrsToList (k: mapAttrs (_: mapAttrs' (n: nameValuePair "${k}-${n}"))) {
+          package = self.packages;
+          devShell = self.devShells;
+        }
+        ++ [ (mapAttrs (_: m: { treefmt = m.check self; }) treefmtEval) ]
+      );
 
-      formatter = eachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
+      formatter = mapAttrs (_: m: m.wrapper) treefmtEval;
 
-      packages.x86_64-linux = import ./pkgs/default.nix (args // { system = "x86_64-linux"; });
-      devShells.x86_64-linux.default = self.packages."x86_64-linux".devShell;
+      packages = mapAttrs (_: pkg: {
+        default = pkg;
+        nixpkgs-update = pkg;
+        inherit (pkg) nixpkgs-update-doc;
+      }) packageEval;
 
-      # nix flake check is broken for these when run on x86_64-linux
-      # packages.x86_64-darwin = import ./pkgs/default.nix (args // { system = "x86_64-darwin"; });
-      # devShells.x86_64-darwin.default = self.packages."x86_64-darwin".devShell;
+      devShells = mapAttrs (_: pkg: { default = pkg.devShell; }) packageEval;
     };
 }
