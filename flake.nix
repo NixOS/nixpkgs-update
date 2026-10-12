@@ -16,6 +16,7 @@
       treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs {
         projectRootFile = ".git/config";
         programs.ormolu.enable = true;
+        programs.zizmor.enable = true;
       });
     in
     {
