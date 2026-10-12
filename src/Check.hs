@@ -22,7 +22,7 @@ import OurPrelude
 import System.Exit ()
 import Text.Regex.Applicative.Text (RE', (=~))
 import qualified Text.Regex.Applicative.Text as RE
-import Utils (UpdateEnv (..), nixBuildOptions)
+import Utils (UpdateEnv (..), nixBuildOptions, timeoutBin)
 
 default (T.Text)
 
@@ -71,7 +71,7 @@ checkTestsBuild attrPath = do
                  ++ (T.unpack attrPath)
                  ++ ".tests or {}"
              ]
-  r <- runExceptT $ ourReadProcessInterleaved $ proc "timeout" args
+  r <- runExceptT $ ourReadProcessInterleaved $ proc timeoutBin args
   case r of
     Left errorMessage -> do
       T.putStrLn $ attrPath <> ".tests process failed with output: " <> errorMessage
