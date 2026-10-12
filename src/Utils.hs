@@ -272,7 +272,7 @@ runLog logger =
     Output o -> embed $ logger o
 
 envToken :: IO (Maybe Text)
-envToken = fmap tshow <$> getEnv "GITHUB_TOKEN"
+envToken = fmap T.pack <$> getEnv "GITHUB_TOKEN"
 
 localToken :: IO (Maybe Text)
 localToken = do
