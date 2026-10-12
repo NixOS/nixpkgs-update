@@ -30,23 +30,37 @@ let
       polysemy-plugin = haskell.lib.dontCheck haskellPackages.polysemy-plugin;
       polysemy = haskell.lib.dontCheck haskellPackages.polysemy;
       http-api-data = haskell.lib.doJailbreak haskellPackages.http-api-data;
-      nixpkgs-update = haskell.lib.justStaticExecutables (
-        haskell.lib.failOnAllWarnings (
-          haskell.lib.disableExecutableProfiling (
-            haskell.lib.disableLibraryProfiling (
-              haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ] (
-                (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs (prevAttrs: {
-                  env = prevAttrs.env or { } // deps;
-                  passthru = prevAttrs.passthru or { } // {
-                    nixpkgs-update-doc = doc;
-                    devShell = shell;
-                  };
-                })
+      nixpkgs-update =
+        haskell.lib.overrideCabal
+          (haskell.lib.justStaticExecutables (
+            haskell.lib.failOnAllWarnings (
+              haskell.lib.disableExecutableProfiling (
+                haskell.lib.disableLibraryProfiling (
+                  haskellPackages.generateOptparseApplicativeCompletions [ "nixpkgs-update" ] (
+                    (haskellPackages.callPackage ../nixpkgs-update.nix { }).overrideAttrs (prevAttrs: {
+                      env = prevAttrs.env or { } // deps;
+                      passthru = prevAttrs.passthru or { } // {
+                        nixpkgs-update-doc = doc;
+                        devShell = shell;
+                      };
+                    })
+                  )
+                )
               )
             )
-          )
-        )
-      );
+          ))
+          (
+            prevAttrs:
+            # This works around a "not allowed to refer to the following paths"
+            # error which seems to manifest only on Darwin. Removing the
+            # reference doesn't appear to have any negative effect, but I
+            # haven't tested it extensively.
+            lib.optionalAttrs stdenvNoCC.hostPlatform.isDarwin {
+              postInstall = prevAttrs.postInstall or "" + ''
+                remove-references-to -t ${haskellPackages'.github} "''${!outputBin}/bin/nixpkgs-update"
+              '';
+            }
+          );
     };
   };
 

@@ -11,15 +11,17 @@
 
   outputs = { self, nixpkgs, mmdoc, treefmt-nix, runtimeDeps }:
     let
-      inherit (builtins) mapAttrs;
+      inherit (builtins) mapAttrs zipAttrsWith;
       inherit (nixpkgs.lib)
         genAttrs
         mapAttrs'
+        mapAttrsToList
+        mergeAttrsList
         mkForce
         nameValuePair
         ;
 
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       eachSystem = f: genAttrs systems (system: f system nixpkgs.legacyPackages.${system});
       treefmtEval = eachSystem (
         system: pkgs:
@@ -38,40 +40,36 @@
         system: pkgs:
         import ./. {
           inherit pkgs system;
-          mmdoc = pkgs.lib.recursiveUpdate mmdoc.packages.${system}.mmdoc {
-            meta.mainProgram = "mmdoc";
-          };
+          mmdoc =
+            pkgs.lib.recursiveUpdate
+              (mmdoc.packages.${system}.mmdoc.overrideAttrs {
+                # Unit tests have been broken on aarch64-linux since 0.20
+                ${if system == "aarch64-linux" then "doCheck" else null} = false;
+              })
+              {
+                meta.mainProgram = "mmdoc";
+              };
           runtimePkgs = runtimeDeps.legacyPackages.${system};
         }
       );
-      pickPackagesFor =
-        system:
-        let
-          pkg = packageEval.${system};
-        in
-        {
-          default = pkg;
-          nixpkgs-update = pkg;
-          inherit (pkg) nixpkgs-update-doc;
-        };
     in
     {
-      checks.x86_64-linux =
-        let
-          packages = mapAttrs' (n: nameValuePair "package-${n}") self.packages.x86_64-linux;
-          devShells = mapAttrs' (n: nameValuePair "devShell-${n}") self.devShells.x86_64-linux;
-        in
-        packages // devShells // {
-          treefmt = treefmtEval.x86_64-linux.check self;
-        };
+      checks = zipAttrsWith (_: mergeAttrsList) (
+        mapAttrsToList (k: mapAttrs (_: mapAttrs' (n: nameValuePair "${k}-${n}"))) {
+          package = self.packages;
+          devShell = self.devShells;
+        }
+        ++ [ (mapAttrs (_: m: { treefmt = m.check self; }) treefmtEval) ]
+      );
 
       formatter = mapAttrs (_: m: m.wrapper) treefmtEval;
 
-      packages.x86_64-linux = pickPackagesFor "x86_64-linux";
-      devShells.x86_64-linux.default = packageEval.x86_64-linux.devShell;
+      packages = mapAttrs (_: pkg: {
+        default = pkg;
+        nixpkgs-update = pkg;
+        inherit (pkg) nixpkgs-update-doc;
+      }) packageEval;
 
-      # nix flake check is broken for these when run on x86_64-linux
-      # packages.x86_64-darwin = pickPackagesFor "x86_64-darwin";
-      # devShells.x86_64-darwin.default = packageEval.x86_64-darwin.devShell;
+      devShells = mapAttrs (_: pkg: { default = pkg.devShell; }) packageEval;
     };
 }
