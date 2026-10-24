@@ -394,7 +394,7 @@ publishPackage log updateEnv oldSrcUrl newSrcUrl attrPath result opReport prBase
   commitRev <- Git.headRev
   nixpkgsReviewMsg <-
     if prBase /= "staging" && (runNixpkgsReview . options $ updateEnv)
-      then liftIO $ NixpkgsReview.runReport log commitRev
+      then liftIO $ NixpkgsReview.runReport log commitRev $ nixpkgsReviewOptions . options $ updateEnv
       else return ""
   -- Try to push it three times
   -- (these pushes use --force, so it doesn't matter if branchExists is True)

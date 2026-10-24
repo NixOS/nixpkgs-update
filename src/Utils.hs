@@ -32,6 +32,7 @@ module Utils
 where
 
 import Data.Bits ((.|.))
+import Data.Map (Map)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -113,7 +114,8 @@ data Options = Options
     makeCVEReport :: Bool,
     runNixpkgsReview :: Bool,
     calculateOutpaths :: Bool,
-    attrpath :: Bool
+    attrpath :: Bool,
+    nixpkgsReviewOptions :: Map String String
   }
   deriving (Show)
 

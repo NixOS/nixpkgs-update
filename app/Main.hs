@@ -5,7 +5,9 @@
 
 module Main where
 
-import Control.Applicative ((<**>))
+import Control.Applicative (many, (<**>))
+import Data.Map (Map)
+import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import DeleteMerged (deleteDone)
@@ -29,7 +31,8 @@ data UpdateOptions = UpdateOptions
     cve :: Bool,
     nixpkgsReview :: Bool,
     outpaths :: Bool,
-    attrpathOpt :: Bool
+    attrpathOpt :: Bool,
+    nixpkgsReviewOpts :: Map String String
   }
 
 data Command
@@ -51,6 +54,18 @@ updateOptionsParser =
     <*> O.flag False True (O.long "nixpkgs-review" <> O.help "Runs nixpkgs-review on update commit rev")
     <*> O.flag False True (O.long "outpaths" <> O.help "Calculate outpaths to determine the branch to target")
     <*> O.flag False True (O.long "attrpath" <> O.help "UPDATE_INFO uses the exact attrpath.")
+    <*> ( fmap M.fromList . many . O.option readPair $
+            O.long "nixpkgs-review-opt"
+              <> O.metavar "NAME=VALUE"
+              <> O.help "Added to nixpkgs-review commands as --NAME VALUE; can be used multiple times"
+              <> O.hidden
+        )
+  where
+    readPair :: O.ReadM (String, String)
+    readPair = O.maybeReader \str ->
+      case break ('=' ==) str of
+        (k, '=' : v) -> Just (k, v)
+        _ -> Nothing
 
 updateParser :: O.Parser Command
 updateParser =
@@ -145,12 +160,12 @@ main = do
     DeleteDone delete -> do
       setupNixpkgs $ GH.untagName ghUser
       deleteDone delete token ghUser
-    Update UpdateOptions {pr, cve, nixpkgsReview, outpaths, attrpathOpt} update -> do
+    Update UpdateOptions {pr, cve, nixpkgsReview, outpaths, attrpathOpt, nixpkgsReviewOpts} update -> do
       setupNixpkgs $ GH.untagName ghUser
-      updatePackage (Options pr False ghUser token cve nixpkgsReview outpaths attrpathOpt) update >>= exitWith
-    UpdateBatch UpdateOptions {pr, cve, nixpkgsReview, outpaths, attrpathOpt} update -> do
+      updatePackage (Options pr False ghUser token cve nixpkgsReview outpaths attrpathOpt nixpkgsReviewOpts) update >>= exitWith
+    UpdateBatch UpdateOptions {pr, cve, nixpkgsReview, outpaths, attrpathOpt, nixpkgsReviewOpts} update -> do
       setupNixpkgs $ GH.untagName ghUser
-      updatePackage (Options pr True ghUser token cve nixpkgsReview outpaths attrpathOpt) update >>= exitWith
+      updatePackage (Options pr True ghUser token cve nixpkgsReview outpaths attrpathOpt nixpkgsReviewOpts) update >>= exitWith
     Version -> do
       v <- runExceptT Nix.version
       case v of
@@ -165,10 +180,10 @@ main = do
       setupNixpkgs $ GH.untagName ghUser
       report <-
         cveReport
-          (UpdateEnv productID oldVersion newVersion Nothing (Options False False ghUser token False False False False))
+          (UpdateEnv productID oldVersion newVersion Nothing (Options False False ghUser token False False False False mempty))
       T.putStrLn report
     SourceGithub -> do
       updates <- T.readFile "packages-to-update.txt"
       setupNixpkgs $ GH.untagName ghUser
-      sourceGithubAll (Options False False ghUser token False False False False) updates
+      sourceGithubAll (Options False False ghUser token False False False False mempty) updates
     FetchRepology -> Repology.fetch
