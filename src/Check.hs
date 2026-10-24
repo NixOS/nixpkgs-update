@@ -1,7 +1,6 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module Check
@@ -14,32 +13,19 @@ where
 
 import Control.Applicative (many)
 import Data.Char (isDigit, isLetter)
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Language.Haskell.TH.Env (envQ)
+import qualified NixpkgsUpdate.Tools as Tools
 import OurPrelude
 import System.Exit ()
 import Text.Regex.Applicative.Text (RE', (=~))
 import qualified Text.Regex.Applicative.Text as RE
-import Utils (UpdateEnv (..), nixBuildOptions, timeoutBin)
+import Utils (UpdateEnv (..), nixBuildOptions)
 
 default (T.Text)
 
-treeBin :: String
-treeBin = fromJust ($$(envQ "TREE") :: Maybe String) <> "/bin/tree"
-
 procTree :: [String] -> ProcessConfig () () ()
-procTree = proc treeBin
-
-gistBin :: String
-gistBin = fromJust ($$(envQ "GIST") :: Maybe String) <> "/bin/gist"
-
-data BinaryCheck = BinaryCheck
-  { filePath :: FilePath,
-    zeroExitCode :: Bool,
-    versionPresent :: Bool
-  }
+procTree = proc Tools.tree
 
 isWordCharacter :: Char -> Bool
 isWordCharacter c = (isDigit c) || (isLetter c)
@@ -64,14 +50,14 @@ checkTestsBuild :: Text -> IO Bool
 checkTestsBuild attrPath = do
   let timeout = "30m"
   let args =
-        [T.unpack timeout, "nix-build"]
+        [T.unpack timeout, Tools.nixBuild]
           ++ nixBuildOptions
           ++ [ "-E",
                "{ config }: (import ./. { inherit config; })."
                  ++ (T.unpack attrPath)
                  ++ ".tests or {}"
              ]
-  r <- runExceptT $ ourReadProcessInterleaved $ proc timeoutBin args
+  r <- runExceptT $ ourReadProcessInterleaved $ proc Tools.timeout args
   case r of
     Left errorMessage -> do
       T.putStrLn $ attrPath <> ".tests process failed with output: " <> errorMessage
@@ -157,7 +143,7 @@ treeGist resultPath =
       ( do
           contents <- procTree [resultPath] & ourReadProcessInterleavedBS_
           g <-
-            shell gistBin
+            shell Tools.gist
               & setStdin (byteStringInput contents)
               & ourReadProcessInterleaved_
           return $ "- directory tree listing: " <> g <> "\n"
@@ -170,7 +156,7 @@ duGist resultPath =
       ( do
           contents <- proc "du" [resultPath] & ourReadProcessInterleavedBS_
           g <-
-            shell gistBin
+            shell Tools.gist
               & setStdin (byteStringInput contents)
               & ourReadProcessInterleaved_
           return $ "- du listing: " <> g <> "\n"
