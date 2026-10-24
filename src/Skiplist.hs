@@ -29,6 +29,7 @@ attrPath = skiplister attrPathList
 packageName :: TextSkiplister m
 packageName name =
   if name == "elementary-xfce-icon-theme" -- https://github.com/NixOS/nixpkgs-update/issues/63
+    || name == "bobby" -- https://github.com/NixOS/nixpkgs-update/issues/583
     then return ()
     else skiplister nameList name
 
