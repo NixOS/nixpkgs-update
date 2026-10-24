@@ -11,18 +11,25 @@
 
   pkgs,
   runtimePkgs ? null,
+
+  # Controls whether references to tools used like Nix and Git are compiled in
+  # as store paths; otherwise, they will be referenced dynamically from PATH.
+  withStaticToolPaths ? true,
 }:
 
 let
-  deps = with (if runtimePkgs == null then pkgs else runtimePkgs); {
-    NIX = nix;
-    GIT = git;
-    TREE = tree;
-    GIST = gist;
-    # TODO: are there more coreutils paths that need locking down?
-    TIMEOUT = coreutils;
-    NIXPKGSREVIEW = nixpkgs-review;
-  };
+  deps = lib.optionalAttrs withStaticToolPaths (
+    with (if runtimePkgs == null then pkgs else runtimePkgs);
+    {
+      NIX = nix;
+      GIT = git;
+      TREE = tree;
+      GIST = gist;
+      # TODO: are there more coreutils paths that need locking down?
+      TIMEOUT = coreutils;
+      NIXPKGSREVIEW = nixpkgs-review;
+    }
+  );
 
   haskellPackages' = haskellPackages.override {
     overrides = _: haskellPackages: {
@@ -73,7 +80,7 @@ let
       treefmt
     ];
     packages = ps: [ ps.nixpkgs-update ];
-    shellHook = ''
+    ${if deps == { } then null else "shellHook"} = ''
       ${lib.toShellVars deps}
       export ${toString (builtins.attrNames deps)}
     '';

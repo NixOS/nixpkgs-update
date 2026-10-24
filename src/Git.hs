@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Git
   ( findAutoUpdateBranchMessage,
@@ -26,12 +25,11 @@ import Control.Concurrent
 import Control.Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Time.Clock (addUTCTime, getCurrentTime)
 import qualified Data.Vector as V
-import Language.Haskell.TH.Env (envQ)
+import qualified NixpkgsUpdate.Tools as Tools
 import OurPrelude hiding (throw)
 import System.Directory (doesDirectoryExist, doesFileExist, getCurrentDirectory, getModificationTime, setCurrentDirectory)
 import System.Environment.XDG.BaseDir (getUserCacheDir)
@@ -40,11 +38,8 @@ import System.IO.Error (tryIOError)
 import System.Posix.Env (setEnv)
 import Utils (Options (..), UpdateEnv (..), branchName, branchPrefix)
 
-bin :: String
-bin = fromJust ($$(envQ "GIT") :: Maybe String) <> "/bin/git"
-
 procGit :: [String] -> ProcessConfig () () ()
-procGit = proc bin
+procGit = proc Tools.git
 
 clean :: ProcessConfig () () ()
 clean = silently $ procGit ["clean", "-fdx"]

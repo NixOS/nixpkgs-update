@@ -4,7 +4,7 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 97f3f76c1ecc98d6d598250ec6cd70e4bd3cf456609b909bfec98412b2328de2
+-- hash: 2704af9f5d5c8b60f2e0e1a6fb32deea395c003b784b4b5e30618c36d4fc482e
 
 name:           nixpkgs-update
 version:        0.4.0
@@ -36,6 +36,7 @@ library
       Git
       Nix
       NixpkgsReview
+      NixpkgsUpdate.Tools
       NVD
       NVDRules
       OurPrelude
@@ -94,7 +95,6 @@ library
     , template-haskell
     , temporary
     , text
-    , th-env
     , time
     , transformers
     , typed-process
@@ -156,7 +156,6 @@ executable nixpkgs-update
     , template-haskell
     , temporary
     , text
-    , th-env
     , time
     , transformers
     , typed-process
@@ -227,7 +226,6 @@ test-suite spec
     , template-haskell
     , temporary
     , text
-    , th-env
     , time
     , transformers
     , typed-process

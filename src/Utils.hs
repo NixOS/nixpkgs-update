@@ -1,7 +1,6 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
 module Utils
@@ -29,7 +28,6 @@ module Utils
     outpathCacheDir,
     cacheDir,
     worktreeDir,
-    timeoutBin,
   )
 where
 
@@ -48,7 +46,6 @@ import Database.SQLite.Simple.Internal (Field (..))
 import Database.SQLite.Simple.Ok (Ok (..))
 import Database.SQLite.Simple.ToField (ToField, toField)
 import qualified GitHub as GH
-import Language.Haskell.TH.Env (envQ)
 import OurPrelude
 import Polysemy.Output
 import System.Directory (createDirectoryIfMissing, doesDirectoryExist)
@@ -69,9 +66,6 @@ import Text.Read (readEither)
 import Type.Reflection (Typeable)
 
 default (T.Text)
-
-timeoutBin :: String
-timeoutBin = fromJust ($$(envQ "TIMEOUT") :: Maybe String) <> "/bin/timeout"
 
 type ProductID = Text
 
