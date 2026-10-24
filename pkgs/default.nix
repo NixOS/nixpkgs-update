@@ -10,11 +10,11 @@
   treefmt,
 
   pkgs,
-  runtimePkgs ? pkgs,
+  runtimePkgs ? null,
 }:
 
 let
-  deps = with runtimePkgs; {
+  deps = with (if runtimePkgs == null then pkgs else runtimePkgs); {
     NIX = nix;
     GIT = git;
     TREE = tree;
