@@ -4,6 +4,7 @@
 module Process where
 
 import qualified Data.ByteString.Lazy as BSL
+import Data.Maybe (fromMaybe)
 import Polysemy
 import Polysemy.Error (Error, throw)
 import Polysemy.Input
