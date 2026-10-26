@@ -173,6 +173,7 @@ test-suite spec
   other-modules:
       CheckSpec
       DoctestSpec
+      ProcessSpec
       UpdateSpec
       UtilsSpec
   hs-source-dirs:
