@@ -4,17 +4,40 @@
 module Process where
 
 import qualified Data.ByteString.Lazy as BSL
+import Data.Maybe (fromMaybe)
 import Polysemy
+import Polysemy.Error (Error, throw)
 import Polysemy.Input
 import System.Exit (ExitCode (..))
 import qualified System.Process.Typed as TP
+import Prelude hiding (read)
 
 data Process m a where
-  Read_ :: TP.ProcessConfig stdin stdout stderr -> Process m (BSL.ByteString, BSL.ByteString)
-  ReadInterleaved_ :: TP.ProcessConfig stdin stdout stderr -> Process m BSL.ByteString
+  Read :: TP.ProcessConfig stdin stdout stderr -> Process m (ExitCode, BSL.ByteString, BSL.ByteString)
   ReadInterleaved :: TP.ProcessConfig stdin stdout stderr -> Process m (ExitCode, BSL.ByteString)
 
 makeSem ''Process
+
+read_ ::
+  (Members '[Process, Error TP.ExitCodeException] r) =>
+  TP.ProcessConfig stdin stdout stderr ->
+  Sem r (BSL.ByteString, BSL.ByteString)
+read_ config = do
+  (exitCode, out, err) <- read config
+  case exitCode of
+    ExitSuccess -> return (out, err)
+    _ ->
+      throw
+        TP.ExitCodeException
+          { TP.eceExitCode = exitCode,
+            TP.eceProcessConfig =
+              TP.setStdin TP.nullStream $
+                TP.setStdout TP.nullStream $
+                  TP.setStderr TP.nullStream $
+                    config,
+            TP.eceStdout = out,
+            TP.eceStderr = err
+          }
 
 runIO ::
   (Member (Embed IO) r) =>
@@ -22,21 +45,18 @@ runIO ::
   Sem r a
 runIO =
   interpret $ \case
-    Read_ config -> embed $ (TP.readProcess_ config)
-    ReadInterleaved_ config -> embed $ (TP.readProcessInterleaved_ config)
-    ReadInterleaved config -> embed $ (TP.readProcessInterleaved config)
+    Read config -> embed (TP.readProcess config)
+    ReadInterleaved config -> embed (TP.readProcessInterleaved config)
 
 runPure ::
-  [BSL.ByteString] ->
+  [(ExitCode, BSL.ByteString, BSL.ByteString)] ->
   Sem (Process ': r) a ->
   Sem r a
 runPure outputList =
   runInputList outputList
     . reinterpret \case
-      Read_ _config -> do
-        r <- maybe "" id <$> input
-        return (r, "")
-      ReadInterleaved_ _config -> maybe "" id <$> input
+      Read _config ->
+        fromMaybe (ExitSuccess, "", "") <$> input
       ReadInterleaved _config -> do
-        r <- maybe "" id <$> input
-        return (ExitSuccess, r)
+        (exitCode, out, err) <- fromMaybe (ExitSuccess, "", "") <$> input
+        return (exitCode, out <> err)

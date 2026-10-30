@@ -55,7 +55,7 @@ import Data.Vector (Vector)
 import Language.Haskell.TH.Quote
 import qualified NeatInterpolation
 import Polysemy
-import Polysemy.Error hiding (mapError, note, try, tryJust)
+import Polysemy.Error hiding (note, try, tryJust)
 import qualified Process as P
 import System.Exit
 import System.FilePath ((</>))
@@ -89,11 +89,11 @@ ourReadProcess_ ::
 ourReadProcess_ = readProcess_ >>> tryIOTextET >>> fmapRT (\(stdout, stderr) -> (bytestringToText stdout, bytestringToText stderr))
 
 ourReadProcess_Sem ::
-  (Members '[P.Process] r) =>
+  (Members '[P.Process, Error Text] r) =>
   ProcessConfig stdin stdoutIgnored stderrIgnored ->
   Sem r (Text, Text)
 ourReadProcess_Sem =
-  P.read_ >>> fmap (\(stdout, stderr) -> (bytestringToText stdout, bytestringToText stderr))
+  mapError tshow . P.read_ >>> fmap (\(stdout, stderr) -> (bytestringToText stdout, bytestringToText stderr))
 
 ourReadProcessInterleaved_ ::
   (MonadIO m) =>

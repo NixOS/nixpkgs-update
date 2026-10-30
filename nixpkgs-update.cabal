@@ -4,7 +4,7 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 97f3f76c1ecc98d6d598250ec6cd70e4bd3cf456609b909bfec98412b2328de2
+-- hash: 0a7c01fb53662245c7a6bbd5d01d866a973b403db01a9ab3d06641ebe3734ac8
 
 name:           nixpkgs-update
 version:        0.4.0
@@ -174,6 +174,7 @@ test-suite spec
   other-modules:
       CheckSpec
       DoctestSpec
+      ProcessSpec
       UpdateSpec
       UtilsSpec
   hs-source-dirs:
