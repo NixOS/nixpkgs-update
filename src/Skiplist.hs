@@ -128,6 +128,8 @@ attrPathList =
     eq "netbird-upload" "same as netbird",
     eq "syncstorage-rs-mysql" "same as syncstorage-rs",
     eq "syncstorage-rs-pgsql" "same as syncstorage-rs",
+    eq "syncthing-discovery" "same src as syncthing",
+    eq "syncthing-relay" "same src as syncthing",
     eq "systemdLibs" "same as systemd",
     eq "systemdMinimal" "same as systemd",
     eq "systemdUkify" "same as systemd",
