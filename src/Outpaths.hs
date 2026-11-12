@@ -3,6 +3,7 @@
 
 module Outpaths
   ( currentOutpathSet,
+    originalOutpathSet,
     currentOutpathSetUncached,
     ResultLine,
     dummyOutpathSetBefore,
@@ -13,6 +14,7 @@ module Outpaths
   )
 where
 
+import Control.Exception (bracket_)
 import Data.List (sort)
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -21,6 +23,7 @@ import qualified Data.Vector as V
 import qualified Git
 import OurPrelude
 import qualified System.Directory
+import System.IO.Temp (withSystemTempDirectory)
 import qualified System.Posix.Files as F
 import Text.Parsec (parse)
 import Text.Parser.Char
@@ -96,13 +99,12 @@ in
   )
 |]
 
-outPath :: (MonadIO m) => ExceptT Text m Text
-outPath = do
+outPathAt :: (MonadIO m) => FilePath -> ExceptT Text m Text
+outPathAt sourceDir = do
   cacheDir <- liftIO $ Utils.outpathCacheDir
   let outpathFile = (cacheDir </> "outpaths.nix")
   liftIO $ T.writeFile outpathFile outPathsExpr
   liftIO $ putStrLn "[outpaths] eval start"
-  currentDir <- liftIO $ System.Directory.getCurrentDirectory
   result <-
     ourReadProcessInterleaved_ $
       proc
@@ -114,7 +116,7 @@ outPath = do
           "--out-path",
           "--arg",
           "path",
-          currentDir,
+          sourceDir,
           "--arg",
           "checkMeta",
           "true",
@@ -122,6 +124,9 @@ outPath = do
         ]
   liftIO $ putStrLn "[outpaths] eval end"
   pure result
+
+outPath :: (MonadIO m) => ExceptT Text m Text
+outPath = liftIO System.Directory.getCurrentDirectory >>= outPathAt
 
 data Outpath = Outpath
   { mayName :: Maybe Text,
@@ -151,6 +156,26 @@ currentOutpathSet = do
       dir <- Utils.outpathCacheDir
       let file = dir <> "/" <> T.unpack rev
       liftIO $ T.writeFile file paths
+      pure paths
+  parse parseResults "outpath" op & fmapL tshow & hoistEither
+
+-- Use an unmodified checkout when the baseline is requested after an update
+-- script has edited the working tree. Cached results do not need a worktree.
+originalOutpathSet :: Text -> ExceptT Text IO (Set ResultLine)
+originalOutpathSet rev = do
+  cached <- lookupOutPathByRev rev
+  op <- case cached of
+    Just paths -> pure paths
+    Nothing -> do
+      result <- liftIO $ withSystemTempDirectory "nixpkgs-update-outpaths" $ \tmpDir -> do
+        let baselineDir = tmpDir </> "baseline"
+        bracket_
+          (Git.worktreeAddDetached baselineDir rev)
+          (Git.worktreeRemove baselineDir)
+          (runExceptT $ outPathAt baselineDir)
+      paths <- hoistEither result
+      dir <- Utils.outpathCacheDir
+      liftIO $ T.writeFile (dir <> "/" <> T.unpack rev) paths
       pure paths
   parse parseResults "outpath" op & fmapL tshow & hoistEither
 
