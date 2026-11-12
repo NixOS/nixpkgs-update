@@ -23,7 +23,8 @@ import qualified Data.Vector as V
 import qualified Git
 import OurPrelude
 import qualified System.Directory
-import System.IO.Temp (withSystemTempDirectory)
+import System.Environment (getEnvironment)
+import System.IO.Temp (withTempDirectory)
 import qualified System.Posix.Files as F
 import Text.Parsec (parse)
 import Text.Parser.Char
@@ -105,23 +106,35 @@ outPathAt sourceDir = do
   let outpathFile = (cacheDir </> "outpaths.nix")
   liftIO $ T.writeFile outpathFile outPathsExpr
   liftIO $ putStrLn "[outpaths] eval start"
-  result <-
-    ourReadProcessInterleaved_ $
-      proc
-        "nix-env"
-        [ "-f",
-          outpathFile,
-          "-qaP",
-          "--no-name",
-          "--out-path",
-          "--arg",
-          "path",
-          sourceDir,
-          "--arg",
-          "checkMeta",
-          "true",
-          "--show-trace"
-        ]
+  config <- liftIO $ do
+    env <- getEnvironment
+    -- Evaluate from the tree being measured and shadow any existing nixpkgs
+    -- entry in NIX_PATH, so the checkout containing the derivation is not
+    -- used for `<nixpkgs>` lookups.
+    let nixPath =
+          "nixpkgs="
+            <> sourceDir
+            <> maybe "" (":" <>) (lookup "NIX_PATH" env)
+        env' = ("NIX_PATH", nixPath) : filter ((/= "NIX_PATH") . fst) env
+    pure $
+      setEnv env' $
+        setWorkingDir sourceDir $
+          proc
+            "nix-env"
+            [ "-f",
+              outpathFile,
+              "-qaP",
+              "--no-name",
+              "--out-path",
+              "--arg",
+              "path",
+              sourceDir,
+              "--arg",
+              "checkMeta",
+              "true",
+              "--show-trace"
+            ]
+  result <- ourReadProcessInterleaved_ config
   liftIO $ putStrLn "[outpaths] eval end"
   pure result
 
@@ -167,7 +180,8 @@ originalOutpathSet rev = do
   op <- case cached of
     Just paths -> pure paths
     Nothing -> do
-      result <- liftIO $ withSystemTempDirectory "nixpkgs-update-outpaths" $ \tmpDir -> do
+      worktreeBase <- liftIO Utils.worktreeDir
+      result <- liftIO $ withTempDirectory worktreeBase "outpaths" $ \tmpDir -> do
         let baselineDir = tmpDir </> "baseline"
         bracket_
           (Git.worktreeAddDetached baselineDir rev)
