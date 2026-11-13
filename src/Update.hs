@@ -235,12 +235,10 @@ updateAttrPath log mergeBase updateEnv@UpdateEnv {..} attrPath = do
       assertNotUpdatedOn updateEnv derivationFile "staging-next"
       assertNotUpdatedOn updateEnv derivationFile "staging-nixos"
 
-    -- Calculate output paths for rebuilds and our merge base
+    -- Save the unchanged revision before update scripts run. Defer the
+    -- expensive baseline evaluation until we know the update is useful.
     let calcOutpaths = calculateOutpaths options && isNothing skipOutpathBase
-    mergeBaseOutpathSet <-
-      if calcOutpaths
-        then Outpaths.currentOutpathSet
-        else return $ Outpaths.dummyOutpathSetBefore attrPath
+    baseRevision <- if calcOutpaths then Just <$> Git.headRev else pure Nothing
 
     -- Get the original values for diffing purposes
     derivationContents <- liftIO $ T.readFile $ T.unpack derivationFile
@@ -324,8 +322,11 @@ updateAttrPath log mergeBase updateEnv@UpdateEnv {..} attrPath = do
       assertNotUpdatedOn updateEnv' rewrittenFile "staging-nixos"
 
     --
-    -- Outpaths
-    -- this sections is very slow
+    -- Outpaths: only evaluate the baseline after rewrites and update checks
+    -- have succeeded. Use the original revision, not the modified worktree.
+    mergeBaseOutpathSet <- case baseRevision of
+      Just rev -> Outpaths.originalOutpathSet rev
+      Nothing -> pure $ Outpaths.dummyOutpathSetBefore attrPath
     editedOutpathSet <- if calcOutpaths then Outpaths.currentOutpathSetUncached else return $ Outpaths.dummyOutpathSetAfter attrPath
     let opDiff = S.difference mergeBaseOutpathSet editedOutpathSet
     let numPRebuilds = Outpaths.numPackageRebuilds opDiff

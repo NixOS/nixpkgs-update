@@ -17,6 +17,7 @@ module Git
     setupNixpkgs,
     Git.show,
     worktreeAdd,
+    worktreeAddDetached,
     worktreeRemove,
   )
 where
@@ -47,6 +48,10 @@ clean = silently $ procGit ["clean", "-fdx"]
 worktreeAdd :: FilePath -> Text -> UpdateEnv -> IO ()
 worktreeAdd path commitish updateEnv =
   runProcessNoIndexIssue_IO $ silently $ procGit ["worktree", "add", "-b", T.unpack (branchName updateEnv), path, T.unpack commitish]
+
+worktreeAddDetached :: FilePath -> Text -> IO ()
+worktreeAddDetached path commitish =
+  runProcessNoIndexIssue_IO $ silently $ procGit ["worktree", "add", "--detach", path, T.unpack commitish]
 
 worktreeRemove :: FilePath -> IO ()
 worktreeRemove path = do
