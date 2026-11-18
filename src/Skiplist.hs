@@ -104,6 +104,8 @@ attrPathList =
     eq "qemu-utils" "updates via qemu package",
     eq "ollama-rocm" "only `ollama` is explicitly updated (defined in the same file)",
     eq "ollama-cuda" "only `ollama` is explicitly updated (defined in the same file)",
+    eq "opensplatWithCuda" "only `opensplat` is explicitly updated (defined in the same file)",
+    eq "opensplatWithRocm" "only `opensplat` is explicitly updated (defined in the same file)",
     eq "python3Packages.mmengine" "takes way too long to build",
     eq "bitwarden-directory-connector-cli" "src is aliased to bitwarden-directory-connector",
     eq "vaultwarden-mysql" "src is aliased to vaultwarden",
